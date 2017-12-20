@@ -24,6 +24,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			score = int(s)
 		}
 	}
+	start := time.Now()
 	items, err := fetch(score)
 	if err != nil {
 		log.Fatal(err)
@@ -39,6 +40,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", rss)
+	fmt.Println(time.Now(), "request took", time.Since(start))
 }
 
 func main() {
