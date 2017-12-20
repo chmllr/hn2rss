@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/feeds"
 )
 
-const api = "https://hacker-news.firebaseio.com/v0/"
+const api = "https://hacker-news.firebaseio.com/v0"
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	score := 250
@@ -107,7 +107,7 @@ type ids []int
 
 func feed(score int) (ids, error) {
 	var res ids
-	resp, err := http.Get(api + "topstories.json")
+	resp, err := http.Get(api + "/topstories.json")
 	if err != nil {
 		return res, fmt.Errorf("couldn't fetch topstories: %v", err)
 	}
