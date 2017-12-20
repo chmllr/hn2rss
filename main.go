@@ -8,6 +8,9 @@ import (
 	"sort"
 	"strconv"
 	"sync"
+	"time"
+
+	"github.com/gorilla/feeds"
 )
 
 const api = "https://hacker-news.firebaseio.com/v0/"
@@ -27,9 +30,34 @@ func main() {
 	// http.HandleFunc("/", handler)
 	// http.ListenAndServe(":8080", nil)
 
-	items, _ := fetch(250)
-	s, _ := json.Marshal(items)
-	fmt.Println(string(s))
+	score := 250
+	items, _ := fetch(score)
+
+	fmt.Println(item2RSS(score, items))
+}
+
+func item2RSS(score int, items []item) (string, error) {
+	now := time.Now()
+	feed := &feeds.Feed{
+		Title:       fmt.Sprintf("Hacker News %d", score),
+		Link:        &feeds.Link{Href: "https://github.com/chmllr/hn2rss"},
+		Description: "Top Hacker News Stories",
+		Author:      &feeds.Author{Name: "Christian Müller", Email: "@drmllr"},
+		Created:     now,
+	}
+
+	feed.Items = make([]*feeds.Item, len(items))
+	for i, item := range items {
+		feed.Items[i] = &feeds.Item{
+			Title:       item.Title,
+			Link:        &feeds.Link{Href: item.Url},
+			Description: fmt.Sprintf("%d points, %d comments, https://news.ycombinator.com/item?id=%d", item.Score, item.Comments, item.ID),
+			Author:      &feeds.Author{Name: item.Author},
+			Created:     time.Unix(item.Time, 0),
+		}
+	}
+
+	return feed.ToRss()
 }
 
 func fetch(score int) ([]item, error) {
@@ -84,10 +112,12 @@ func feed(score int) (ids, error) {
 }
 
 type item struct {
-	Time     int    `json:"time"`
+	ID       int    `json:"id"`
+	Time     int64  `json:"time"`
 	Score    int    `json:"score"`
 	Comments int    `json:"descendants"`
 	Title    string `json:"title"`
+	Author   string `json:"by"`
 	Url      string `json:"url"`
 }
 
