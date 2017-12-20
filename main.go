@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -16,24 +17,33 @@ import (
 const api = "https://hacker-news.firebaseio.com/v0/"
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	score := int64(250)
+	score := 250
 	vals := r.URL.Query()
 	if points := vals["points"]; len(points) > 0 {
 		if s, err := strconv.ParseInt(points[0], 10, 16); err == nil {
-			score = s
+			score = int(s)
 		}
 	}
-	fmt.Fprintf(w, "%+v", score)
+	items, err := fetch(score)
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	rss, err := item2RSS(score, items)
+	if err != nil {
+		log.Fatal(err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "%s", rss)
 }
 
 func main() {
-	// http.HandleFunc("/", handler)
-	// http.ListenAndServe(":8080", nil)
-
-	score := 250
-	items, _ := fetch(score)
-
-	fmt.Println(item2RSS(score, items))
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(":8080", nil)
 }
 
 func item2RSS(score int, items []item) (string, error) {
@@ -87,7 +97,7 @@ func fetch(score int) ([]item, error) {
 			res = append(res, *v)
 		}
 	}
-	sort.Slice(res, func(i, j int) bool { return res[i].Time < res[j].Time })
+	sort.Slice(res, func(i, j int) bool { return res[i].Time > res[j].Time })
 	return res, nil
 }
 
