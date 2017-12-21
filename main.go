@@ -63,7 +63,7 @@ func item2RSS(score int, items []item) (string, error) {
 		feed.Items[i] = &feeds.Item{
 			Title:       item.Title,
 			Link:        &feeds.Link{Href: item.Url},
-			Description: fmt.Sprintf("%d points, %d comments, https://news.ycombinator.com/item?id=%d", item.Score, item.Comments, item.ID),
+			Description: fmt.Sprintf("%d comments: https://news.ycombinator.com/item?id=%d", item.Comments, item.ID),
 			Author:      &feeds.Author{Name: item.Author},
 			Created:     time.Unix(item.Time, 0),
 		}
