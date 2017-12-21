@@ -49,13 +49,12 @@ func main() {
 }
 
 func item2RSS(score int, items []item) (string, error) {
-	now := time.Now()
 	feed := &feeds.Feed{
 		Title:       fmt.Sprintf("Hacker News %d", score),
 		Link:        &feeds.Link{Href: "https://github.com/chmllr/hn2rss"},
 		Description: "Top Hacker News Stories",
 		Author:      &feeds.Author{Name: "Christian Müller", Email: "@drmllr"},
-		Created:     now,
+		Created:     time.Now(),
 	}
 
 	feed.Items = make([]*feeds.Item, len(items))
