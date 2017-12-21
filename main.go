@@ -27,20 +27,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	items, err := fetch(score)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
 	rss, err := item2RSS(score, items)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s", rss)
-	fmt.Println(time.Now(), "request took", time.Since(start))
+	log.Println("request took", time.Since(start))
 }
 
 func main() {
@@ -84,7 +84,7 @@ func fetch(score int) ([]item, error) {
 		go func(i, id int) {
 			item, err := story(id)
 			if err != nil {
-				fmt.Printf("couldn't fetch item %d: %v\n", id, err)
+				log.Printf("couldn't fetch item %d: %v\n", id, err)
 			}
 			if item.Score >= score {
 				arr[i] = &item
