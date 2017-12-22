@@ -7,43 +7,40 @@ import (
 	"log"
 	"net/http"
 	"sort"
-	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/feeds"
 )
 
-const api = "https://hacker-news.firebaseio.com/v0"
+const (
+	api             = "https://hacker-news.firebaseio.com/v0"
+	refreshInterval = 30 * time.Minute
+	score           = 250
+)
+
+var rss atomic.Value
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	score := 250
-	vals := r.URL.Query()
-	if points := vals["points"]; len(points) > 0 {
-		if s, err := strconv.ParseInt(points[0], 10, 16); err == nil {
-			score = int(s)
-		}
-	}
-	start := time.Now()
-	items, err := fetch(score)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
-	}
-
-	rss, err := item2RSS(score, items)
-	if err != nil {
-		log.Println(err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
-	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "%s", rss)
-	log.Println("request took", time.Since(start))
+	fmt.Fprintf(w, "%s", rss.Load().(string))
 }
 
 func main() {
+	go func() {
+		for {
+			start := time.Now()
+			newRss, err := fetch(score)
+			if err != nil {
+				log.Println(err)
+			} else {
+				rss.Store(newRss)
+			}
+			log.Println("request took", time.Since(start))
+			time.Sleep(refreshInterval)
+		}
+	}()
 	http.HandleFunc("/", handler)
 	http.ListenAndServe(":8080", nil)
 }
@@ -71,10 +68,10 @@ func item2RSS(score int, items []item) (string, error) {
 	return feed.ToRss()
 }
 
-func fetch(score int) ([]item, error) {
+func fetch(score int) (string, error) {
 	fd, err := feed(score)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't fetch feed: %v", err)
+		return "", fmt.Errorf("couldn't fetch feed: %v", err)
 	}
 	arr := make([]*item, len(fd))
 	var wg sync.WaitGroup
@@ -99,7 +96,7 @@ func fetch(score int) ([]item, error) {
 		}
 	}
 	sort.Slice(res, func(i, j int) bool { return res[i].Time > res[j].Time })
-	return res, nil
+	return item2RSS(score, res)
 }
 
 type ids []int
