@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -42,7 +43,7 @@ func main() {
 		}
 	}()
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 }
 
 func item2RSS(score int, items []item) (string, error) {

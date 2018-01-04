@@ -24,3 +24,8 @@
 [[constraint]]
   name = "github.com/gorilla/feeds"
   version = "1.0.0"
+
+[metadata.heroku]
+  root-package = "github.com/chmllr/hn2rss"
+  go-version = "go1.9.2"
+
