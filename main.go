@@ -50,19 +50,25 @@ func item2RSS(score int, items []item) (string, error) {
 	feed := &feeds.Feed{
 		Title:       fmt.Sprintf("Hacker News %d", score),
 		Link:        &feeds.Link{Href: "https://github.com/chmllr/hn2rss"},
-		Description: "Top Hacker News Stories",
-		Author:      &feeds.Author{Name: "Christian Müller", Email: "@drmllr"},
+		Description: "Hacker News stories with over 250 points",
+		Author:      &feeds.Author{Name: "Christian Müller", Email: "drmllr@twitter.com"},
 		Created:     time.Now(),
 	}
 
 	feed.Items = make([]*feeds.Item, len(items))
 	for i, item := range items {
+		articleLink := item.Url
+		hnLink := fmt.Sprintf("https://news.ycombinator.com/item?id=%d", item.ID)
+		if articleLink == "" {
+			articleLink = hnLink
+		}
 		feed.Items[i] = &feeds.Item{
+			Id:          hnLink,
 			Title:       item.Title,
-			Link:        &feeds.Link{Href: item.Url},
-			Description: fmt.Sprintf("%d comments: https://news.ycombinator.com/item?id=%d", item.Comments, item.ID),
-			Author:      &feeds.Author{Name: item.Author},
+			Link:        &feeds.Link{Href: articleLink},
+			Description: fmt.Sprintf("%d comments: %s", item.Comments, hnLink),
 			Created:     time.Unix(item.Time, 0),
+			// Author:      &feeds.Author{Name: item.Author},
 		}
 	}
 
